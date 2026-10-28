@@ -1,15 +1,55 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Agent with Memory</title>
-<style>body{font-family:system-ui;max-width:760px;margin:32px auto;padding:0 16px;background:#0b1730;color:#eef}a{color:#9cf}textarea,input,select,button{font-size:15px;padding:8px;border-radius:6px;border:1px solid #345;background:#13234a;color:#eef}textarea{width:100%;box-sizing:border-box}button{cursor:pointer;background:#2b5bd7}pre{background:#13234a;padding:12px;white-space:pre-wrap;border-radius:6px;max-height:480px;overflow:auto}.row{display:flex;gap:8px;margin:8px 0}</style></head>
-<body><h1>Agent with Memory</h1><p>A chat agent with short-term memory (recent turns) and long-term memory (facts it extracts about you), stored per session in Cloudflare KV. Tell it something, then ask later.</p>
-<div class=row><select id=ep><option value="0">POST /api/chat — tell it something</option><option value="1">POST /api/chat — test recall</option><option value="2">GET /api/memory — view memory</option><option value="3">POST /api/forget — forget me</option></select><button id=go>Send</button></div>
-<textarea id=bd rows=5></textarea><p style="opacity:.7;font-size:13px">Edit the JSON body and press Send. Rate limited to keep this demo on the free tier. Source on <a href="https://github.com/braylo777/agent-04-memory">GitHub</a>.</p>
-<h3>Response</h3><pre id=out></pre>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Agent with Memory · Braylo</title><style>:root{--navy:#0d1520;--cream:#efe9dc;--brass:#b39b70;--ink:#16202e;--line:#253246}
+*{box-sizing:border-box}body{margin:0;background:var(--navy);color:var(--cream);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:40px 20px 56px}
+header .tag{color:var(--brass);letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:600}
+h1{font-family:Georgia,serif;font-weight:500;font-size:34px;margin:6px 0 8px}
+.lead{opacity:.82;max-width:640px;margin:0 0 24px}
+.card{background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0}
+.card h2{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--brass);margin:0 0 10px;font-weight:600}
+textarea,input,select{width:100%;font:inherit;color:var(--cream);background:var(--navy);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--brass)}
+button{font:inherit;font-weight:600;background:var(--brass);color:var(--navy);border:0;border-radius:8px;padding:10px 18px;cursor:pointer}
+button.ghost{background:transparent;color:var(--cream);border:1px solid var(--line)}button:disabled{opacity:.5;cursor:wait}
+.row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}.row>input,.row>select{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{font-size:13px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--cream);font-weight:400}
+.chip:hover{border-color:var(--brass)}
+.out{white-space:pre-wrap;min-height:48px}.meta{font-size:12px;opacity:.6;margin-top:8px}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(179,155,112,.15);color:var(--brass);margin:2px 4px 2px 0}
+pre{background:var(--navy);border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:13px;max-height:360px;margin:0}
+footer{margin-top:28px;font-size:13px;opacity:.65}a{color:var(--brass)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}.grid .card{margin:0}.small{font-size:13px}.strike{text-decoration:line-through;opacity:.55}.item{padding:3px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}</style></head>
+<body><div class="wrap"><header><div class="tag">Project 04 · Agentic AI portfolio</div><h1>Agent with Memory</h1>
+<p class="lead">One module per memory type: working, semantic, episodic, procedural, retrieval and prospective, all on Cloudflare's free tier. Facts get superseded instead of deleted, stored memories fade over time, and reminders fire when they're due.</p></header>
+<div class="card"><h2>Chat</h2><div class="chips" id="ex"></div><div id="log" class="out small" style="margin-top:10px"></div>
+<div class="row"><input id="msg" maxlength="500" placeholder="Say something…"><button id="send">Send</button></div><div id="meta" class="meta"></div></div>
+<div class="grid">
+<div class="card"><h2>Working</h2><div id="working" class="small"></div></div>
+<div class="card"><h2>Semantic · facts</h2><div id="semantic" class="small"></div></div>
+<div class="card"><h2>Episodic · task log</h2><div id="episodic" class="small"></div></div>
+<div class="card"><h2>Procedural · playbooks</h2><div id="procedural" class="small"></div></div>
+<div class="card"><h2>Retrieval · vectors</h2><div id="retrieval" class="small"></div><div class="row"><button class="ghost" id="age">Fast-forward 30 days</button></div></div>
+<div class="card"><h2>Prospective · reminders</h2><div id="prospective" class="small"></div></div>
+</div>
+<div class="row"><button class="ghost" id="forget">Forget me</button></div>
+<footer>Parametric memory (what Llama 3.3 learned in training) is the 7th type; it isn't editable here. Rate limited to stay on the free tier · <a href="https://github.com/braylo777/agent-04-memory">Source on GitHub</a></footer></div>
 <script>
-const S=localStorage.sid||(localStorage.sid=Math.random().toString(36).slice(2,10));
-const E=[{"label": "tell it something", "method": "POST", "path": "/api/chat", "body": {"session": "{{session}}", "message": "Hi! I'm Sam, I live in Austin and I love spicy food."}}, {"label": "test recall", "method": "POST", "path": "/api/chat", "body": {"session": "{{session}}", "message": "Where should I go for dinner tonight?"}}, {"label": "view memory", "method": "GET", "path": "/api/memory?session={{session}}"}, {"label": "forget me", "method": "POST", "path": "/api/forget", "body": {"session": "{{session}}"}}];
-const fill=()=>{const x=E[ep.value];bd.value=x.body?JSON.stringify(x.body,null,2).replaceAll("{{session}}",S):"";bd.disabled=x.method==="GET"};
-ep.onchange=fill;fill();
-go.onclick=async()=>{const x=E[ep.value];out.textContent="working…";const t0=Date.now();
-try{const r=await fetch(x.path.replaceAll("{{session}}",S),x.method==="GET"?{}:{method:"POST",headers:{"content-type":"application/json"},body:bd.value});
-out.textContent=`HTTP ${r.status} · ${Date.now()-t0} ms\n\n`+JSON.stringify(await r.json(),null,2)}catch(e){out.textContent=String(e)}};
+const S=localStorage.sid||(localStorage.sid=Math.random().toString(36).slice(2,10));const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));const none='<span class="meta">empty</span>';
+const post=(p,b)=>fetch(p,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({session:S,...b})});
+function show(v){if(!v||!v.working)return;
+$("working").innerHTML=`${v.working.turns} turns in buffer<div class="meta">${esc(v.working.summary)||"no summary yet (compacts after 8 turns)"}</div>`;
+$("semantic").innerHTML=[...v.semantic.active.map(f=>`<div class="item"><span class="pill">${esc(f.key)}</span>${esc(f.value)}</div>`),...v.semantic.superseded.map(f=>`<div class="item strike"><span class="pill">${esc(f.key)}</span>${esc(f.value)}</div>`)].join("")||none;
+$("episodic").innerHTML=v.episodic.map(e=>`<div class="item">${esc(e.task)}<div class="meta">→ ${esc(e.outcome.slice(0,90))}</div></div>`).join("")||none;
+$("procedural").innerHTML=v.procedural.map(n=>`<span class="pill">${esc(n)}</span>`).join("");
+$("retrieval").innerHTML=v.retrieval.map(r=>`<div class="item"><span class="pill">${r.strength}</span>${esc(r.text.slice(0,70))}</div>`).join("")||none;
+$("prospective").innerHTML=[...v.prospective.pending.map(r=>`<div class="item">⏳ ${esc(r.text)}<div class="meta">due ${new Date(r.due_at).toLocaleTimeString()}</div></div>`),...v.prospective.inbox.map(r=>`<div class="item">🔔 ${esc(r.text)}</div>`)].join("")||none}
+const refresh=()=>fetch("/api/memory?session="+S).then(r=>r.json()).then(show);refresh();setInterval(refresh,15000);
+["Hi, I'm Sam and I live in Denver.","Actually I just moved to Lisbon.","Remind me in 30 seconds to stretch.","Ideas for dinner tonight?"].forEach(t=>{const b=document.createElement("button");b.className="chip";b.textContent=t;b.onclick=()=>{$("msg").value=t;send()};$("ex").append(b)});
+async function send(){const m=$("msg").value.trim();if(!m)return;$("send").disabled=true;$("log").textContent+=`You: ${m}\n`;$("msg").value="";const t=Date.now();
+try{const r=await post("/api/chat",{message:m});const j=await r.json();$("log").textContent+=(j.reply?`Agent: ${j.reply}`:`Error: ${j.error}`)+"\n\n";show(j.modules);
+$("meta").textContent=`HTTP ${r.status} · ${Date.now()-t} ms`+(j.used?` · playbooks: ${j.used.playbooks.join(", ")||"none"} · episodes recalled: ${j.used.episodes.length}`:"")}catch(e){$("log").textContent+=e+"\n"}$("send").disabled=false}
+$("send").onclick=send;$("msg").onkeydown=e=>{if(e.key==="Enter")send()};
+$("age").onclick=async()=>{await post("/api/age",{days:30});refresh()};
+$("forget").onclick=async()=>{await post("/api/forget",{});$("log").textContent="";refresh()};
 </script></body></html>

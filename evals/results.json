@@ -1,0 +1,108 @@
+{
+  "project": "agent-04-memory",
+  "base": "https://agent-04-memory.braylo777.workers.dev",
+  "models": {
+    "llm": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    "embed": "@cf/baai/bge-base-en-v1.5"
+  },
+  "run_at": "2026-10-28T00:37Z (approx.)",
+  "status": "PARTIAL: the recall section (10 cases) completed; the run stopped at the first supersede case when the account's shared Workers AI daily free allocation (10,000 neurons) ran out. Supersede, recency, forgetting and reminder cases have not been run live yet. Rerun `node evals/run.mjs` after the daily reset (00:00 UTC).",
+  "metrics": {
+    "recall_accuracy": {
+      "correct": 10,
+      "n": 10,
+      "rate": 1.0
+    },
+    "supersede_correctness": null,
+    "recency_ranking_accuracy": null,
+    "forgetting_accuracy": null,
+    "reminder_firing": null,
+    "latency_ms": null
+  },
+  "notes": "Recall pass/fail per case was taken from the run log; reply text and latencies were not saved because the run was interrupted before writing results.",
+  "cases": {
+    "recall": [
+      {
+        "tell": "Hi, my name is Priya.",
+        "ask": "What is my name?",
+        "expect": [
+          "Priya"
+        ],
+        "pass": true
+      },
+      {
+        "tell": "I live in Denver, Colorado.",
+        "ask": "Which city do I live in?",
+        "expect": [
+          "Denver"
+        ],
+        "pass": true
+      },
+      {
+        "tell": "My favorite color is teal.",
+        "ask": "What's my favorite color?",
+        "expect": [
+          "teal"
+        ],
+        "pass": true
+      },
+      {
+        "tell": "I work as a dental hygienist.",
+        "ask": "What do I do for work?",
+        "expect": [
+          "hygienist"
+        ],
+        "pass": true
+      },
+      {
+        "tell": "I'm allergic to peanuts.",
+        "ask": "What food allergy do I have?",
+        "expect": [
+          "peanut"
+        ],
+        "pass": true
+      },
+      {
+        "tell": "My dog is a corgi named Biscuit.",
+        "ask": "What's my dog's name?",
+        "expect": [
+          "Biscuit"
+        ],
+        "pass": true
+      },
+      {
+        "tell": "I'm training for the Chicago Marathon.",
+        "ask": "Which race am I training for?",
+        "expect": [
+          "Chicago"
+        ],
+        "pass": true
+      },
+      {
+        "tell": "I drive a blue Subaru Outback.",
+        "ask": "What car do I drive?",
+        "expect": [
+          "Subaru",
+          "Outback"
+        ],
+        "pass": true
+      },
+      {
+        "tell": "My favorite programming language is Rust.",
+        "ask": "Which programming language do I like most?",
+        "expect": [
+          "Rust"
+        ],
+        "pass": true
+      },
+      {
+        "tell": "I'm vegetarian.",
+        "ask": "Do I have any diet I follow?",
+        "expect": [
+          "vegetarian"
+        ],
+        "pass": true
+      }
+    ]
+  }
+}

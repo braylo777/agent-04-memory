@@ -1,0 +1,197 @@
+{
+ "recall": [
+  {
+   "tell": "Hi, my name is Priya.",
+   "ask": "What is my name?",
+   "expect": [
+    "Priya"
+   ]
+  },
+  {
+   "tell": "I live in Denver, Colorado.",
+   "ask": "Which city do I live in?",
+   "expect": [
+    "Denver"
+   ]
+  },
+  {
+   "tell": "My favorite color is teal.",
+   "ask": "What's my favorite color?",
+   "expect": [
+    "teal"
+   ]
+  },
+  {
+   "tell": "I work as a dental hygienist.",
+   "ask": "What do I do for work?",
+   "expect": [
+    "hygienist"
+   ]
+  },
+  {
+   "tell": "I'm allergic to peanuts.",
+   "ask": "What food allergy do I have?",
+   "expect": [
+    "peanut"
+   ]
+  },
+  {
+   "tell": "My dog is a corgi named Biscuit.",
+   "ask": "What's my dog's name?",
+   "expect": [
+    "Biscuit"
+   ]
+  },
+  {
+   "tell": "I'm training for the Chicago Marathon.",
+   "ask": "Which race am I training for?",
+   "expect": [
+    "Chicago"
+   ]
+  },
+  {
+   "tell": "I drive a blue Subaru Outback.",
+   "ask": "What car do I drive?",
+   "expect": [
+    "Subaru",
+    "Outback"
+   ]
+  },
+  {
+   "tell": "My favorite programming language is Rust.",
+   "ask": "Which programming language do I like most?",
+   "expect": [
+    "Rust"
+   ]
+  },
+  {
+   "tell": "I'm vegetarian.",
+   "ask": "Do I have any diet I follow?",
+   "expect": [
+    "vegetarian"
+   ]
+  }
+ ],
+ "supersede": [
+  {
+   "tell": "I live in Denver.",
+   "change": "Update: I just moved to Lisbon.",
+   "key": "location",
+   "old": "Denver",
+   "new": "Lisbon",
+   "ask": "Where do I live now?"
+  },
+  {
+   "tell": "I work as a nurse.",
+   "change": "I quit nursing and now I work as a software engineer.",
+   "key": "job",
+   "old": "nurse",
+   "new": "engineer",
+   "ask": "What is my job now?"
+  },
+  {
+   "tell": "My favorite color is green.",
+   "change": "Actually my favorite color is purple now.",
+   "key": "favorite_color",
+   "old": "green",
+   "new": "purple",
+   "ask": "What's my favorite color?"
+  },
+  {
+   "tell": "I'm vegetarian.",
+   "change": "I stopped being vegetarian; I'm vegan now.",
+   "key": "diet",
+   "old": "vegetarian",
+   "new": "vegan",
+   "ask": "What diet do I follow?"
+  },
+  {
+   "tell": "I drive a Honda Civic.",
+   "change": "I sold the Civic and bought a Tesla Model 3.",
+   "key": "vehicle",
+   "old": "Civic",
+   "new": "Tesla",
+   "ask": "What car do I drive?"
+  },
+  {
+   "tell": "My name is Alex.",
+   "change": "Please call me Jordan from now on, that's my name.",
+   "key": "name",
+   "old": "Alex",
+   "new": "Jordan",
+   "ask": "What's my name?"
+  }
+ ],
+ "recency": [
+  {
+   "old": "My gym is Planet Fitness.",
+   "new": "My gym is Equinox.",
+   "q": "Which gym do I go to?",
+   "expect": "Equinox"
+  },
+  {
+   "old": "My dentist is Dr. Patel.",
+   "new": "My dentist is Dr. Gomez.",
+   "q": "Who is my dentist?",
+   "expect": "Gomez"
+  },
+  {
+   "old": "My Wi-Fi network is called Orbit.",
+   "new": "My Wi-Fi network is called Nebula.",
+   "q": "What is my Wi-Fi network called?",
+   "expect": "Nebula"
+  },
+  {
+   "old": "My team standup is at 9am.",
+   "new": "My team standup is at 10:30am.",
+   "q": "When is my standup?",
+   "expect": "10:30"
+  },
+  {
+   "old": "My manager is Karen.",
+   "new": "My manager is Luis.",
+   "q": "Who is my manager?",
+   "expect": "Luis"
+  }
+ ],
+ "forgetting": [
+  {
+   "old": "My locker code is 4417.",
+   "fresh": "My bike lock code is 9902.",
+   "q": "What is my code?"
+  },
+  {
+   "old": "The plumber's number is 555-0101.",
+   "fresh": "The electrician's number is 555-0202.",
+   "q": "What is the phone number?"
+  },
+  {
+   "old": "I parked on level 3, spot B12.",
+   "fresh": "I parked on level 5, spot D4.",
+   "q": "Where did I park?"
+  },
+  {
+   "old": "Book club meets at Ana's house.",
+   "fresh": "Book club meets at the library.",
+   "q": "Where does book club meet?"
+  }
+ ],
+ "reminders": [
+  {
+   "msg": "Remind me in 20 seconds to drink water.",
+   "expect": "drink water"
+  },
+  {
+   "msg": "Remind me in 25 seconds to stretch my legs.",
+   "expect": "stretch"
+  },
+  {
+   "msg": "Remind me in 20 seconds to check the oven.",
+   "expect": "oven"
+  },
+  {
+   "msg": "Remind me in 30 seconds to call Mom.",
+   "expect": "call Mom"
+  }
+ ]
+}
