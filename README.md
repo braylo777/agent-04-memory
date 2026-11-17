@@ -25,7 +25,7 @@ flowchart TB
   U[Demo UI / API] -->|POST /api/chat| W[Cloudflare Worker]
   CRON[Cron */5 min] -->|scheduled| P
   W --> RL{Rate limit 5/min/IP}
-  RL --> T[Turn orchestrator<br/>src/agent.js]
+  RL --> T[Turn orchestrator<br/>src/agent04/agent.py]
   subgraph KV[Cloudflare KV · one record per session]
     WM[Working buffer + summary]
     SM[Semantic facts<br/>active + superseded]
