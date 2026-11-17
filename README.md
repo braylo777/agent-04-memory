@@ -9,12 +9,12 @@ A chat agent with **seven types of memory**, each in its own module, on Cloudfla
 ## Memory types
 | Type | Module | What it does |
 |---|---|---|
-| Working | `src/memory/working.js` | The context buffer. After each turn, never mid-turn, it keeps the last 4 turns once it passes 8 and folds older ones into a bounded summary. |
-| Semantic | `src/memory/semantic.js` | Facts about the user as key/value slots (name, location, job…). A new value **supersedes** the old one: the old fact stays with `superseded_at` / `superseded_by` and is dropped from the prompt. Nothing is deleted. |
-| Episodic | `src/memory/episodic.js` | A log of past tasks and their outcomes. Each episode is embedded, and similar later requests pull the past outcome into the prompt. |
-| Procedural | `src/memory/playbooks.js` | The skills/playbooks file: step-by-step how-tos (plan a trip, recommend food, write an email…) chosen by trigger words and injected as instructions. |
-| Retrieval | `src/memory/retrieval.js` | A vector store: BGE embeddings from Workers AI, cosine similarity, kept in KV. Scoring is **recency-aware**: `score = cosine + 0.15 × strength`. |
-| Prospective | `src/memory/prospective.js` | Reminders ("remind me in 10 minutes to…"). A `*/5` cron trigger delivers due reminders, and every request checks too, so they fire on time in the demo. |
+| Working | `src/agent04/memory.py` and `worker/src/memory.rs` | The context buffer. After each turn, never mid-turn, it keeps the last 4 turns once it passes 8 and folds older ones into a bounded summary. |
+| Semantic | `src/agent04/memory.py` and `worker/src/memory.rs` | Facts about the user as key/value slots (name, location, job…). A new value **supersedes** the old one: the old fact stays with `superseded_at` / `superseded_by` and is dropped from the prompt. Nothing is deleted. |
+| Episodic | `src/agent04/memory.py` and `worker/src/memory.rs` | A log of past tasks and their outcomes. Each episode is embedded, and similar later requests pull the past outcome into the prompt. |
+| Procedural | `src/agent04/memory.py` and `worker/src/memory.rs` | The skills/playbooks file: step-by-step how-tos (plan a trip, recommend food, write an email…) chosen by trigger words and injected as instructions. |
+| Retrieval | `src/agent04/memory.py` and `worker/src/memory.rs` | A vector store: BGE embeddings from Workers AI, cosine similarity, kept in KV. Scoring is **recency-aware**: `score = cosine + 0.15 × strength`. |
+| Prospective | `src/agent04/memory.py` and `worker/src/memory.rs` | Reminders ("remind me in 10 minutes to…"). A `*/5` cron trigger delivers due reminders, and every request checks too, so they fire on time in the demo. |
 | Parametric | (none) | What Llama 3.3 learned in training. It can't be edited at runtime; the other six types exist to add to or override it. |
 
 **Forgetting:** each retrieval item has `strength = 0.5^(days since last use / 14)`. Below 0.05 (about 60 days unused) it is forgotten. Recalling an item refreshes it. Sessions also expire from KV after 30 days.
@@ -51,7 +51,7 @@ One turn: deliver due reminders → drop forgotten vectors → embed the message
 API: `POST /api/chat`, `GET /api/memory?session=`, `POST /api/remember` (store a note), `POST /api/recall` (recency-aware search, returns similarity, recency and score), `POST /api/age` (shifts one session's timestamps back N days to show decay without waiting), `POST /api/forget`.
 
 ## Eval results
-Live eval against the deployed agent (`node evals/run.mjs`): 29 cases across recall (10), supersede (6), recency ranking (5), forgetting (4) and reminder firing (4). Output is in [`evals/results.json`](evals/results.json).
+Live eval against the deployed agent (`python3 evals/run.py`): 29 cases across recall (10), supersede (6), recency ranking (5), forgetting (4) and reminder firing (4). Output is in [`evals/results.json`](evals/results.json).
 
 | Metric | Result |
 |---|---|
@@ -65,7 +65,7 @@ Live eval against the deployed agent (`node evals/run.mjs`): 29 cases across rec
 **Status: partial.** On Oct 27, 2026 the recall section finished, then the account's shared Workers AI daily free allocation (10,000 neurons) ran out at the first supersede case. The other sections will be filled in after the daily reset, and no numbers are estimated in the meantime. Those behaviors are covered by the unit tests below in the meantime.
 
 ## Tests
-26 offline unit tests (`node:test`, Workers AI and KV mocked), with dedicated tests for each module:
+Python: 15 tests; Rust: 11 tests (Workers AI and KV mocked), covering each module and the integration paths below. A full scripted scenario (6 chat turns, notes, aging, cron, recall, forgetting) gives identical results for the old JavaScript, the Python and the Rust code. Coverage by module:
 - **Working (3):** no early compaction, keeps newest turns and summarizes the rest, bounded summary.
 - **Semantic (4):** add, supersede with links both ways, same value only confirms, multi-step supersede chain.
 - **Episodic (2):** logging, cap and lookup.
@@ -75,21 +75,25 @@ Live eval against the deployed agent (`node evals/run.mjs`): 29 cases across rec
 - **Integration (7):** supersede through a chat turn, episodic recall reaching the prompt, playbook injection, compaction after the turn and never mid-turn, cron firing a chat-scheduled reminder, recency plus forgetting through the API, HTTP validation.
 
 ```bash
-npm test
+python3 -m pytest
+cd worker && cargo test
 ```
 
 ## Run it
 ```bash
-npm install
-npm test                               # offline unit tests (Node 20+)
-npx wrangler kv namespace create KV    # put the id in wrangler.toml
-npx wrangler dev
-npx wrangler deploy                    # free tier: Workers AI, KV, cron, rate limiting
-node evals/run.mjs                     # live eval, throttled; writes evals/results.json
+python3 -m pytest                                  # Python tests
+cd worker && cargo test                            # Rust tests
+cd worker && worker-build --release                # build the Worker (wasm)
+wrangler kv namespace create KV                    # put the id in worker/wrangler.toml
+wrangler dev
+wrangler deploy                                    # free tier: Workers AI, KV, cron, rate limiting
+BASE=https://... python3 evals/run.py              # live eval, throttled; writes evals/results.json
 ```
 
+The previous JavaScript version is on the `legacy-js` branch and the `pre-pycrust` tag.
+
 ## Stack
-Cloudflare Workers · Workers AI (Llama 3.3 70B, BGE base embeddings) · KV · Cron Triggers · Rate Limiting · esbuild · node:test
+Cloudflare Workers · Workers AI (Llama 3.3 70B, BGE base embeddings) · KV · Cron Triggers · Rate Limiting · Rust (workers-rs) · Python (pytest)
 
 ## License
 MIT
